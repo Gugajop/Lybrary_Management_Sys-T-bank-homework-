@@ -25,7 +25,7 @@ fun main() {
         Disc(99001, true, "The Dark Side of the Moon", "CD")
     )
 
-    /*
+    /**
         Выполняет работу главного меню
     */
     while (true) {
