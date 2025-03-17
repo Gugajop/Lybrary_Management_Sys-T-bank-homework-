@@ -53,6 +53,7 @@ fun main() {
 * @param id Идентификационный номер объекта
  * @param isAvailable Доступность объекта
  * @param title Название объекта
+ * @param type Тип объекта
 */
 abstract class LibraryItem (
     val id: Int,
