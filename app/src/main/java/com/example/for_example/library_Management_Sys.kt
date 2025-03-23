@@ -1,5 +1,8 @@
 package com.example.for_example
 
+/**
+ * Функция фильтрации списка объектов по типу
+ */
 inline fun<reified T : LibraryItem> List<LibraryItem>.filterByType() : List<T> {
     return this.filterIsInstance<T>()
 }
@@ -209,6 +212,9 @@ class Manager {
     }
 }
 
+/**
+ * Реализует оцифровку объектов в CD диск
+ */
 class CDDigitizer : Digitizer<Disc> {
     override fun digitize(item: LibraryItem) : Disc{
         return Disc (
@@ -427,6 +433,9 @@ interface Digitizable
  */
 interface DigitalMedium
 
+/**
+ * Интерфейс для разных оцифровщиков
+ */
 interface Digitizer<out Output : DigitalMedium> {
     fun digitize(item: LibraryItem) : Output
 }
