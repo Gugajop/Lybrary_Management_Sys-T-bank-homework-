@@ -1,5 +1,9 @@
 package com.example.for_example
 
+inline fun<reified T : LibraryItem> List<LibraryItem>.filterByType() : List<T> {
+    return this.filterIsInstance<T>()
+}
+
 fun main() {
 
     val libraryItems = mutableListOf(
@@ -11,11 +15,11 @@ fun main() {
         Book(13579, true, "Маленький принц", "Книга", 96, "Антуан де Сент-Экзюпери"),
 
         // Газеты
-        Newspaper(17245, false, "Сельская жизнь", "Газета", 794),
-        Newspaper(67890, true, "Известия", "Газета", 250),
-        Newspaper(98765, true, "Комсомольская правда", "Газета", 150),
-        Newspaper(43210, false, "Аргументы и факты", "Газета", 52),
-        Newspaper(55555, true, "Вечерняя Москва", "Газета", 100),
+        Newspaper(17245, false, "Сельская жизнь", "Газета", 794, "Май"),
+        Newspaper(67890, true, "Известия", "Газета", 250, "Сентябрь"),
+        Newspaper(98765, true, "Комсомольская правда", "Газета", 150, "Июнь"),
+        Newspaper(43210, false, "Аргументы и факты", "Газета", 52, "Август"),
+        Newspaper(55555, true, "Вечерняя Москва", "Газета", 100, "Февраль"),
 
         // Диски
         Disc(54321, true, "Дэдпул и Росомаха", "Диск", "DVD"),
@@ -25,6 +29,8 @@ fun main() {
         Disc(99001, true, "The Dark Side of the Moon", "Диск", "CD")
     )
 
+    val manager = Manager()
+
     /**
         Выполняет работу главного меню
     */
@@ -33,19 +39,23 @@ fun main() {
         1. Показать книги
         2. Показать газеты
         3. Показать диски
-        4. Выход
+        4. Меню менеджера
+        5. Выход
     """.trimIndent())
         print("Введите команду: ")
 
         when (readlnOrNull()?.toIntOrNull()) {
-            1 -> showItems(libraryItems.filterIsInstance<Book>(), "книг")
-            2 -> showItems(libraryItems.filterIsInstance<Newspaper>(), "газет")
-            3 -> showItems(libraryItems.filterIsInstance<Disc>(), "дисков")
-            4 -> return
+            1 -> showItems(libraryItems.filterByType<Book>(), "книг", libraryItems)
+            2 -> showItems(libraryItems.filterByType<Newspaper>(), "газет", libraryItems)
+            3 -> showItems(libraryItems.filterByType<Disc>(), "дисков", libraryItems)
+            4 -> managerMenu(manager)
+            5 -> return
             else -> println("Нет такой команды.")
         }
     }
 }
+
+var idCounter: Int = 99005
 
 /**
 * Является родительским классом для всех объектов, хранящихся в библиотеке
@@ -74,18 +84,6 @@ abstract class LibraryItem (
      */
     abstract fun getDetailInfo() : String
     /**
-     * Проверяет возможно ли взятие объекта домой и меняет состояние доступности объекта
-     */
-    open fun takeHome() {
-        println("Объект типа $type запрещено брать домой.")
-    }
-    /**
-     * Проверяет возможно ли взятие объекта в зал и меняет состояние доступности объекта
-     */
-    open fun takeToRead() {
-        println("Объект типа $type запрещено брать в зал.")
-    }
-    /**
      * Проверяет возможно ли вернуть объект в библиотеку и меняет состояние доступности объекта
      */
     fun bringBack() {
@@ -109,7 +107,7 @@ class Book(
     type: String,
     private val pageCount: Int,
     private val author: String
-) : LibraryItem(id, isAvailable, title, type) {
+): LibraryItem(id, isAvailable, title, type), HomeTakeble, LibraryReadble, Digitizable {
     override fun getDetailInfo() : String {
         return "книга: \"$title\" ($pageCount стр.) автора: $author с id: $id доступна ${if (isAvailable) "Да" else "Нет"}."
     }
@@ -134,16 +132,18 @@ class Book(
 /**
  * Предоставляет тип "Газета" для библиотеки и реализует для этого типа функции родителя
  * @param issueNumber Номер выпуска газеты
+ * @param month Месяц выпуска газеты
  */
 class Newspaper(
     id: Int,
     isAvailable: Boolean,
     title: String,
     type: String,
-    private val issueNumber: Int
-) : LibraryItem(id, isAvailable, title, type) {
+    private val issueNumber: Int,
+    private val month: String
+) : LibraryItem(id, isAvailable, title, type), LibraryReadble, Digitizable {
     override fun getDetailInfo() : String {
-        return "выпуск: $issueNumber газеты \"$title\" с id: $id доступен: ${if (isAvailable) "Да" else "Нет"}."
+        return "выпуск: $issueNumber дата: $month газеты \"$title\" с id: $id доступен: ${if (isAvailable) "Да" else "Нет"}."
     }
 
     override fun takeToRead() {
@@ -165,7 +165,7 @@ class Disc(
     title: String,
     type: String,
     private val typeOfDisc: String
-) : LibraryItem(id, isAvailable, title, type) {
+) : LibraryItem(id, isAvailable, title, type), HomeTakeble, DigitalMedium {
     override fun getDetailInfo() : String {
         return "$type \"$title\" доступен: ${if (isAvailable) "Да" else "Нет"}."
     }
@@ -180,6 +180,48 @@ class Disc(
 }
 
 /**
+ * Реализует книжный магазин для менеджера
+ */
+class BookStore : Store<Book> {
+    override fun sell(): Book = Book(99002, true, "SomeBook", "Книга", 1986, "SomeAuthor")
+}
+
+/**
+ * Реализует магазин дисков для менеджера
+ */
+class DiscStore : Store<Disc> {
+    override fun sell() : Disc = Disc(99003, true, "SomeDisc", "Диск", "CD")
+}
+
+/**
+ * Реализует газетный ларек для менеджера
+ */
+class NewspaperKiosk : Store<Newspaper> {
+    override fun sell() : Newspaper = Newspaper(99004, true, "SomeNewspaper", "Газета", 5148, "Март")
+}
+
+/**
+ * Класс менеджера, реализует функцию покупки объектов
+ */
+class Manager {
+    fun <T : LibraryItem> buy(store: Store<T>) : T {
+        return store.sell()
+    }
+}
+
+class CDDigitizer : Digitizer<Disc> {
+    override fun digitize(item: LibraryItem) : Disc{
+        return Disc (
+            id = idCounter++,
+            title = "Цифровая копия. ${item.type}. \"${item.title}\"",
+            isAvailable = true,
+            type = "Диск",
+            typeOfDisc = "CD"
+        )
+    }
+}
+
+/**
  * Показывает объекты выбранного типа и реализует переход к взаимодействию с конкретным объектом
  *
  * @param items Список объектов выбранного типа
@@ -187,7 +229,8 @@ class Disc(
  */
 fun showItems (
     items: List<LibraryItem>,
-    itemType: String
+    itemType: String,
+    targetList: MutableList<LibraryItem>
 ) {
     if (items.isEmpty()){
         println("Нет доступных $itemType.")
@@ -217,7 +260,7 @@ fun showItems (
         }
 
         val selectedItem = items[itemNumber - 1]
-        showItemMenu(selectedItem)
+        showItemMenu(selectedItem, targetList)
     }
 }
 
@@ -262,7 +305,8 @@ private fun selectingNumberOfObject(numbersBorder : Int) : Int {
  *
  * @param item Выбранный пользователем объект
  */
-fun showItemMenu(item: LibraryItem) {
+fun showItemMenu(item: LibraryItem, targetList: MutableList<LibraryItem>) {
+    val cdDigitazer = CDDigitizer()
     while (true) {
         println("""
         Выберите действие:
@@ -270,17 +314,119 @@ fun showItemMenu(item: LibraryItem) {
         2. Читать в читальном зале
         3. Показать подробную информацию
         4. Вернуть
-        5. Назад
+        5. Оцифровать
+        6. Назад
       """.trimIndent())
         print("Введите действие: ")
 
         when (readlnOrNull()?.toIntOrNull()) {
-            1 -> item.takeHome()
-            2 -> item.takeToRead()
+            1 -> {
+                if (item is HomeTakeble)
+                    item.takeHome()
+                else
+                    unavailableAction(item.type)
+            }
+            2 -> {
+                if (item is LibraryReadble)
+                    item.takeToRead()
+                else
+                    unavailableAction(item.type)
+            }
             3 -> println(item.getDetailInfo())
             4 -> item.bringBack()
-            5 -> return
+            5 -> {
+                if (item.isAvailable && item is Digitizable) {
+                    targetList.add(cdDigitazer.digitize(item))
+                    println("Цифровая копия создана.")
+                }
+                else if (!item.isAvailable)
+                    println("Невозможно взять на оцифровку объект типа ${item.type} \"${item.title}\" с id: ${item.id}. Причина: объект недоступен")
+                else
+                    unavailableAction(item.type)
+            }
+            6 -> return
             else -> println("Нет такого действия.")
         }
     }
+}
+
+/**
+ * Выводит сообщение, когда действие недоступно для объекта
+ *
+ * @param type Строка типа объекта, для которого действие недоступно
+ */
+fun unavailableAction(type: String) {
+    println("Объекту типа \"$type\" данное действие недоступно.")
+}
+
+fun managerMenu(manager: Manager) {
+    while (true) {
+        println("""
+            Вы в меню менеджера.
+            Введите номер действия:
+            1. Купить книгу
+            2. Купить газету
+            3. Купить диск
+            4. Назад
+        """.trimIndent())
+        print("Введите команду: ")
+
+        when(readlnOrNull()?.toIntOrNull()) {
+            1 -> {
+                val book = manager.buy(BookStore())
+                println("Менеджером куплена книга ${book.title}, ей присвоен id: ${book.id}")
+            }
+            2 -> {
+                val disc = manager.buy(DiscStore())
+                println("Менеджером куплен диск ${disc.title}, ему присвоен id: ${disc.id}")
+            }
+            3 -> {
+                val newspaper = manager.buy(NewspaperKiosk())
+                println("Менеджером куплена газета ${newspaper.title}, ей просвоен id: ${newspaper.id}")
+            }
+            4 -> return
+            else -> println("Нет такой команды.")
+        }
+    }
+}
+
+/**
+ * Интерфейс всех объектов, которые можно брать в зал
+ */
+interface HomeTakeble {
+    /**
+     * Проверяет возможно ли взятие объекта домой и меняет состояние доступности объекта
+     */
+    fun takeHome()
+}
+
+/**
+ * Интерфейс всех объектов, которые можно брать в зал
+ * */
+interface LibraryReadble {
+    /**
+     * Проверяет возможно ли взятие объекта в зал и меняет состояние доступности объекта
+     */
+    fun takeToRead()
+}
+
+/**
+ * Интерфейс для магазинов
+ */
+interface Store<out T : LibraryItem> {
+    fun sell() : T
+}
+
+/**
+ * Интерфейс для носителей, которых можно оцифровать
+ */
+interface Digitizable
+
+/**
+ * Интерфейс всех цифровых носителей
+ */
+interface DigitalMedium
+
+interface Digitizer<out Output : DigitalMedium> {
+    fun digitize(item: LibraryItem) : Output
 }
