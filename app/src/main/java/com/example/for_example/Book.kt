@@ -1,5 +1,10 @@
 package com.example.for_example
 
+import android.content.Context
+import android.graphics.drawable.Drawable
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.ContextCompat
+
 /**
  * Предоставляет тип "Книга" для библиотеки и реализует для этого типа функции родителя
  * @param pageCount Количество страниц в книге
@@ -32,4 +37,6 @@ class Book(
         } else
             println("Невозможно взять на чтение книгу: \"$title\" с id: $id. Причина: книга недоступна.")
     }
+
+    override fun getIconResId(context: Context): Drawable? = AppCompatResources.getDrawable(context, R.drawable.ic_book)
 }

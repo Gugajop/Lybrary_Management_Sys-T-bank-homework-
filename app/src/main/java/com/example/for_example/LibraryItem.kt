@@ -1,5 +1,9 @@
 package com.example.for_example
 
+import android.content.Context
+import android.graphics.drawable.Drawable
+import java.util.Objects
+
 /**
 * Является родительским классом для всех объектов, хранящихся в библиотеке
 *
@@ -35,5 +39,20 @@ abstract class LibraryItem (
             isAvailable = !isAvailable
         } else
             println("Невозможно вернуть объект типа $type с названием: \"$title\" с id: $id. Причина: объект уже доступен пользователям.")
+    }
+
+    abstract fun getIconResId(context: Context) : Drawable?
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is LibraryItem) return false
+        return id == other.id
+                && isAvailable == other.isAvailable
+                && title == other.title
+                && type == other.type
+    }
+
+    override fun hashCode(): Int {
+        return Objects.hash(id, isAvailable, title, type)
     }
 }
