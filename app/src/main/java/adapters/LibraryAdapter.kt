@@ -10,14 +10,14 @@ import com.example.for_example.LibraryItem
 import com.example.for_example.OnItemClickListener
 import com.example.for_example.databinding.LibraryItemBinding
 
-class Library_Adapter : RecyclerView.Adapter<Library_Adapter.ViewHolder>() {
+class LibraryAdapter : RecyclerView.Adapter<LibraryAdapter.ViewHolder>() {
 
     private val diffCallback = object : DiffUtil.ItemCallback<LibraryItem>() {
         override fun areItemsTheSame(oldItem: LibraryItem, newItem: LibraryItem) =
-            oldItem.id == newItem.id
+            oldItem === newItem
 
         override fun areContentsTheSame(oldItem: LibraryItem, newItem: LibraryItem) =
-            oldItem == newItem
+            (oldItem == newItem)
 
         override fun getChangePayload(oldItem: LibraryItem, newItem: LibraryItem): Any? {
             return if (oldItem.isAvailable != newItem.isAvailable) true else null
@@ -29,10 +29,9 @@ class Library_Adapter : RecyclerView.Adapter<Library_Adapter.ViewHolder>() {
     inner class ViewHolder(private val binding: LibraryItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(item: LibraryItem, position: Int) {
+        fun bind(item: LibraryItem) {
             binding.apply {
                 this.item = item
-                this.position = position
                 this.clickListener = itemClickListener
                 cardView.elevation = if (item.isAvailable) 10f.dp else 1f.dp
                 title.alpha = if (item.isAvailable) 1f else 0.3f
@@ -51,11 +50,11 @@ class Library_Adapter : RecyclerView.Adapter<Library_Adapter.ViewHolder>() {
         ViewHolder(LibraryItemBinding.inflate(LayoutInflater.from(parent.context), parent, false))
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) =
-        holder.bind(differ.currentList[position], position)
+        holder.bind(differ.currentList[position])
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: List<Any>) {
         if (payloads.isNotEmpty()) {
-            holder.bind(differ.currentList[position], position)
+            holder.bind(differ.currentList[position])
         } else {
             super.onBindViewHolder(holder, position, payloads)
         }

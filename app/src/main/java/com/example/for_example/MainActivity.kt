@@ -1,6 +1,6 @@
 package com.example.for_example
 
-import adapters.Library_Adapter
+import adapters.LibraryAdapter
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -11,7 +11,9 @@ import com.example.for_example.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity(), OnItemClickListener {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var adapter: Library_Adapter
+    private lateinit var adapter: LibraryAdapter
+    private var lastToast: Toast? = null
+
     private val items = mutableListOf(
         // Книги
         Book(90743, true, "Маугли", "Книга", 202, "Джозеф Киплинг"),
@@ -40,7 +42,7 @@ class MainActivity : AppCompatActivity(), OnItemClickListener {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        adapter = Library_Adapter().apply {
+        adapter = LibraryAdapter().apply {
             setOnItemClickListener(this@MainActivity)
         }
 
@@ -59,12 +61,16 @@ class MainActivity : AppCompatActivity(), OnItemClickListener {
         adapter.submitList(items.toList())
     }
 
-    override fun onItemClick(item: LibraryItem, position: Int) {
-        val updatedItem = item
-        updatedItem.isAvailable = !item.isAvailable
-        items[position] = updatedItem
-        adapter.notifyItemChanged(position, true)
-        Toast.makeText(this, "Элемент с id: ${item.id}", Toast.LENGTH_SHORT).show()
+    override fun onItemClick(item: LibraryItem) {
+        item.isAvailable = !item.isAvailable
+        val position = items.indexOfFirst { it.id == item.id }
+        if (position != -1) {
+            items[position] = item
+            adapter.notifyItemChanged(position, true)
+            lastToast?.cancel()
+            lastToast = Toast.makeText(this, "Элемент с id: ${item.id}", Toast.LENGTH_SHORT)
+            lastToast?.show()
+        }
     }
 
     private fun setupSwipeToDelete() {
@@ -80,9 +86,12 @@ class MainActivity : AppCompatActivity(), OnItemClickListener {
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.absoluteAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
-                    items.removeAt(position)
-                    adapter.submitList(items.toList())
+                    val newList = items.toMutableList().apply { removeAt(position) }
+                    items.clear()
+                    items.addAll(newList)
+                    updateAdapterList()
                 }
+                updateAdapterList()
             }
         }).attachToRecyclerView(binding.recyclerView)
     }
