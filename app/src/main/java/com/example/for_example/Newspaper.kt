@@ -1,5 +1,9 @@
 package com.example.for_example
 
+import android.content.Context
+import android.graphics.drawable.Drawable
+import androidx.appcompat.content.res.AppCompatResources
+
 /**
  * Предоставляет тип "Газета" для библиотеки и реализует для этого типа функции родителя
  * @param issueNumber Номер выпуска газеты
@@ -21,7 +25,9 @@ class Newspaper(
         if (isAvailable) {
             println("Газета: \"$title\" с id: $id взята в зал.")
             isAvailable = !isAvailable
-        } else
+        } else  
             println("Невозможно взять на чтение газету: \"$title\" с id: $id. Причина: газета недоступна.")
     }
+
+    override fun getIconResId(context: Context): Drawable? = AppCompatResources.getDrawable(context, R.drawable.ic_newspaper)
 }

@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">for_example</string>
+    <string name="pic_description">Some description</string>
 </resources>
